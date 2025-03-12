@@ -1,0 +1,62 @@
+services:
+  frontend:
+    build: 
+      context: .
+      dockerfile: ./docker/Dockerfile.frontend
+    image: hoseok-frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/sites-available/domain.conf
+    networks:
+      - app-network
+  backend:
+    build: 
+      context: .
+      dockerfile: ./docker/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    image: hoseok-backend:latest
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=mysql://user:password@db:3306/mydb
+    volumes:
+      - ./backend:/app  
+    networks:
+      - app-network
+  crawler:
+    build: 
+      context: .
+      dockerfile: ./docker/Dockerfile.crawler
+    image: hoseok-crawler:latest
+    ports:
+      - "5000:5000"
+    depends_on:
+      - backend
+    volumes:
+      - ./crawler:/app
+    networks:
+      - app-network
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+
+volumes:
+  db-data:
